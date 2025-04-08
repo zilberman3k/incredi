@@ -20,6 +20,11 @@ npm install
 
 MONGODB_URI={placeholder}
 
+this is since my private mongo cluster is nearly over quota.
+
+took around 3.5 hours, I skipped authentication.
+
+did not put much effort on UX, but I did provide mobile support.
 
 ## Development Server
 
