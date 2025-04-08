@@ -14,12 +14,13 @@
       </div>
     </div>
 
-    <canvas ref="chartContainer" class="w-full h-64"></canvas>
+    <div class="w-full h-64 relative">
+      <canvas ref="chartContainer"></canvas>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
 import Chart from 'chart.js/auto'
 
 const props = defineProps({
@@ -38,6 +39,57 @@ const availableMetrics = [
   { label: 'Memory', value: 'memory' },
   { label: 'Network', value: 'network' }
 ]
+
+const createChart = () => {
+  const ctx = chartContainer.value.getContext('2d')
+  const data = chartData.value
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.05)'
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          enabled: true,
+          mode: 'index',
+          intersect: false
+        }
+      }
+    }
+  })
+};
+
+const updateChart = () => {
+  if (!chart) return
+
+  const data = chartData.value
+  chart.data.labels = data.labels
+  chart.data.datasets = data.datasets
+  chart.update()
+};
+
+const setActiveMetric = metric => {
+  activeMetric.value = metric
+};
 
 const chartData = computed(() => {
   if (!props.data || props.data.length === 0) return { labels: [], datasets: [] }
@@ -103,54 +155,5 @@ watch(activeMetric, () => {
   updateChart()
 })
 
-function createChart() {
-  const ctx = chartContainer.value.getContext('2d')
-  const data = chartData.value
 
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: data,
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        mode: 'index',
-        intersect: false,
-      },
-      scales: {
-        x: {
-          grid: {
-            display: false
-          }
-        },
-        y: {
-          beginAtZero: true,
-          grid: {
-            color: 'rgba(0, 0, 0, 0.05)'
-          }
-        }
-      },
-      plugins: {
-        tooltip: {
-          enabled: true,
-          mode: 'index',
-          intersect: false
-        }
-      }
-    }
-  })
-}
-
-function updateChart() {
-  if (!chart) return
-
-  const data = chartData.value
-  chart.data.labels = data.labels
-  chart.data.datasets = data.datasets
-  chart.update()
-}
-
-function setActiveMetric(metric) {
-  activeMetric.value = metric
-}
 </script>

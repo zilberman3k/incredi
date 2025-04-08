@@ -25,16 +25,9 @@ let metricsBuffer = [];
 // Collect system metrics
 async function collectMetrics() {
     try {
-        // CPU usage
         const cpuData = await si.currentLoad();
-
-        // Memory usage
         const memData = await si.mem();
-
-        // Disk usage
         const diskData = await si.fsSize();
-
-        // Network stats
         const networkStats = await si.networkStats();
 
         const metrics = {
@@ -55,8 +48,8 @@ async function collectMetrics() {
                 usagePercentage: (disk.used / disk.size) * 100
             })),
             network: {
-                rx_sec: networkStats.reduce((sum, iface) => sum + iface.rx_sec, 0),
-                tx_sec: networkStats.reduce((sum, iface) => sum + iface.tx_sec, 0)
+                rx_sec: networkStats.reduce((acc, curr) => acc + curr.rx_sec, 0),
+                tx_sec: networkStats.reduce((acc, curr) => acc + curr.tx_sec, 0)
             }
         };
 
@@ -73,12 +66,7 @@ async function collectMetrics() {
 // Send metrics to cloud with retry
 async function sendMetricsWithRetry(metrics, attempt = 1) {
     try {
-        const response = await axios.post(`${API_URL}/metrics`, metrics, {
-            auth: {
-                username: 'admin',
-                password: process.env.AUTH_PASSWORD || 'password'
-            }
-        });
+        const response = await axios.post(`${API_URL}/metrics`, metrics);
 
         console.log('Metrics sent successfully:', response.status);
         return response;
@@ -96,7 +84,6 @@ async function sendMetricsWithRetry(metrics, attempt = 1) {
     }
 }
 
-// Function to send buffered metrics
 async function sendBufferedMetrics() {
     if (metricsBuffer.length === 0) {
         console.log('No metrics to send');
@@ -115,11 +102,9 @@ async function sendBufferedMetrics() {
     }
 }
 
-// Start collection and sending intervals
 setInterval(collectMetrics, COLLECTION_INTERVAL_MS);
 setInterval(sendBufferedMetrics, SEND_INTERVAL_MS);
 
-// API endpoints for local debugging
 app.get('/api/latest-metrics',  async (req, res) => {
     try {
         const metrics = await collectMetrics();
